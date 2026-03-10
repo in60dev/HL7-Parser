@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HL7 Parser</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3352;
+      --accent: #5b8dee;
+      --accent2: #7c5cdb;
+      --text: #e2e8f0;
+      --text-muted: #7a8299;
+      --green: #4ade80;
+      --yellow: #facc15;
+      --red: #f87171;
+      --orange: #fb923c;
+      --cyan: #22d3ee;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    header h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      background: var(--accent2);
+      color: #fff;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: calc(100vh - 57px);
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      border-bottom: 1px solid var(--border);
+      height: 28vh;
+      min-height: 120px;
+      max-height: 45vh;
+      resize: vertical;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 0.75rem 1.25rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .panel-header .actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    textarea {
+      flex: 1;
+      background: var(--bg);
+      color: var(--text);
+      border: none;
+      outline: none;
+      resize: none;
+      padding: 1.25rem;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.85rem;
+      line-height: 1.7;
+      tab-size: 4;
+    }
+
+    textarea::placeholder { color: var(--text-muted); }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      padding: 0.4rem 0.9rem;
+      transition: all 0.15s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: #4a7de0; }
+
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+
+    .output-panel {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .output-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 1rem 1.25rem;
+    }
+
+    .output-body::-webkit-scrollbar { width: 6px; }
+    .output-body::-webkit-scrollbar-track { background: var(--bg); }
+    .output-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+
+    .empty-state .icon { font-size: 3rem; opacity: 0.3; }
+    .empty-state p { font-size: 0.9rem; max-width: 280px; line-height: 1.6; }
+
+    /* Segment Card */
+    .segment-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 0.75rem;
+    }
+
+    .segment-card:last-child { margin-bottom: 0; }
+
+    .segment-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: var(--surface2);
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .segment-header:hover { background: #2a2f47; }
+
+    .seg-tag {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
+      border-radius: 5px;
+      min-width: 3.5rem;
+      text-align: center;
+    }
+
+    .seg-MSH { background: #1e3a5f; color: var(--accent); }
+    .seg-PID { background: #1e3f2a; color: var(--green); }
+    .seg-PV1, .seg-PV2 { background: #3f2a1e; color: var(--orange); }
+    .seg-OBR { background: #3f3a1e; color: var(--yellow); }
+    .seg-OBX { background: #1e3a3f; color: var(--cyan); }
+    .seg-NTE { background: #2d1e3f; color: #c4b5fd; }
+    .seg-EVN { background: #3f1e1e; color: var(--red); }
+    .seg-ORC { background: #1e3a5f; color: #93c5fd; }
+    .seg-IN1, .seg-IN2 { background: #3f2a3f; color: #f0abfc; }
+    .seg-AL1 { background: #3f2a1e; color: #fdba74; }
+    .seg-DG1 { background: #1e3a3f; color: var(--cyan); }
+    .seg-PR1 { background: #2a3f1e; color: #86efac; }
+    .seg-MSA { background: #1e3a5f; color: var(--accent); }
+    .seg-ERR { background: #3f1e1e; color: var(--red); }
+    .seg-QRD, .seg-QRF { background: #3f3a1e; color: var(--yellow); }
+    .seg-SCH { background: #1e3f3a; color: var(--cyan); }
+    .seg-RGS { background: #2a1e3f; color: #c4b5fd; }
+    .seg-AIG, .seg-AIL, .seg-AIP, .seg-AIS { background: #1e3f2a; color: var(--green); }
+    .seg-unknown { background: #252525; color: #888; }
+
+    .seg-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .seg-count {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .chevron {
+      color: var(--text-muted);
+      transition: transform 0.2s;
+      font-size: 0.75rem;
+    }
+
+    .segment-card.collapsed .chevron { transform: rotate(-90deg); }
+    .segment-card.collapsed .segment-body { display: none; }
+
+    .segment-body {
+      padding: 0;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 2.5rem minmax(180px, 260px) 1fr;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.82rem;
+      align-items: stretch;
+      min-width: 0;
+    }
+
+    .field-row:last-child { border-bottom: none; }
+
+    .field-row.has-value:hover { background: rgba(91, 141, 238, 0.04); }
+
+    .field-num {
+      padding: 0.55rem 0.5rem;
+      color: var(--text-muted);
+      font-family: monospace;
+      font-size: 0.72rem;
+      text-align: center;
+      background: rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid var(--border);
+    }
+
+    .field-name {
+      padding: 0.55rem 0.75rem;
+      color: var(--text-muted);
+      border-right: 1px solid var(--border);
+      font-size: 0.78rem;
+      display: flex;
+      align-items: center;
+      line-height: 1.4;
+      word-break: break-word;
+      min-width: 0;
+    }
+
+    .field-value {
+      padding: 0.55rem 0.75rem;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.8rem;
+      word-break: break-all;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .field-value.empty { color: var(--text-muted); font-style: italic; font-family: inherit; font-size: 0.78rem; }
+
+    .component {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .component-sep {
+      color: var(--border);
+      font-size: 0.85em;
+    }
+
+    .component-val {
+      color: var(--text);
+    }
+
+    .component-label {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.05);
+      padding: 0.05rem 0.3rem;
+      border-radius: 3px;
+      font-family: inherit;
+    }
+
+    .repeat-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      width: 100%;
+    }
+
+    .repeat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .repeat-badge {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      white-space: nowrap;
+    }
+
+    /* Error */
+    .error-box {
+      background: rgba(248, 113, 113, 0.1);
+      border: 1px solid rgba(248, 113, 113, 0.3);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      color: var(--red);
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .stat-item { display: flex; align-items: center; gap: 0.35rem; }
+    .stat-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+    /* Segment index tabs */
+    .seg-index {
+      padding: 0.5rem 1.25rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+
+    .seg-pill {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: monospace;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .seg-pill:hover { border-color: var(--accent); }
+
+    .sample-btn {
+      font-size: 0.72rem;
+      color: var(--accent);
+      background: none;
+      border: 1px solid var(--accent);
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .sample-btn:hover { background: var(--accent); color: #fff; }
+
+    @media (max-width: 600px) {
+      .panel { height: 35vh; }
+      .field-row { grid-template-columns: 2rem minmax(120px, 160px) 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>HL7 Parser</h1>
+  <span class="badge">v2.x</span>
+</header>
+
+<div class="main">
+  <!-- Input Panel -->
+  <div class="panel">
+    <div class="panel-header">
+      <span>HL7 Nachricht eingeben</span>
+      <div class="actions">
+        <button class="sample-btn" onclick="loadSample('adt')">ADT Beispiel</button>
+        <button class="sample-btn" onclick="loadSample('oru')">ORU Beispiel</button>
+        <button class="sample-btn" onclick="loadSample('ack')">ACK Beispiel</button>
+        <button class="btn-ghost" onclick="clearInput()">Leeren</button>
+        <button class="btn-primary" onclick="parse()">Parsen</button>
+      </div>
+    </div>
+    <textarea id="input" placeholder="HL7 Nachricht hier einfügen...
+
+Beispiel:
+MSH|^~\&|SENDER|FACILITY|RECEIVER|DEST|20240101120000||ADT^A01|MSG001|P|2.5
+PID|1||123456^^^MPI||Mustermann^Max^Karl||19800101|M|||Musterstraße 1^^München^^80331^DE
+
+Segmente werden durch Zeilenumbrüche oder &#x0D; getrennt." spellcheck="false"></textarea>
+  </div>
+
+  <!-- Output Panel -->
+  <div class="output-panel">
+    <div class="panel-header">
+      <span>Analysierte Segmente</span>
+      <div id="stats-bar" class="stats-bar"></div>
+    </div>
+    <div id="seg-index" class="seg-index" style="display:none"></div>
+    <div id="output" class="output-body">
+      <div class="empty-state">
+        <div class="icon">⚕</div>
+        <p>HL7 Nachricht eingeben und auf <strong>Parsen</strong> klicken, um die Segmente zu analysieren.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── HL7 Segment & Field Definitions ────────────────────────────────────────
+
+const SEGMENTS = {
+  MSH: {
+    name: "Message Header",
+    fields: [
+      "Feldtrennzeichen",
+      "Kodierungszeichen",
+      "Sendende Anwendung",
+      "Sendende Einrichtung",
+      "Empfangende Anwendung",
+      "Empfangende Einrichtung",
+      "Datum/Uhrzeit der Nachricht",
+      "Sicherheit",
+      "Nachrichtentyp",
+      "Nachrichten-Kontrollnummer",
+      "Verarbeitungs-ID",
+      "Versions-ID",
+      "Sequenznummer",
+      "Fortsetzungs-Pointer",
+      "Empfangs-Bestätigung",
+      "Anwendungs-Bestätigung",
+      "Landescode",
+      "Zeichensatz",
+      "Alternativer Zeichensatz",
+      "Alternativzeichensatz-Behandlungsschema",
+      "Konformitätsanweisung",
+      "Nachrichtenannahme-Modus",
+    ]
+  },
+  MSA: {
+    name: "Message Acknowledgment",
+    fields: [
+      "Bestätigungscode",
+      "Nachrichten-Kontrollnummer",
+      "Textmeldung",
+      "Erwartete Sequenznummer",
+      "Verzögerter Bestätigungstyp",
+      "Fehlerbedingung",
+      "Nachrichtenwartezeit",
+    ]
+  },
+  ERR: {
+    name: "Error",
+    fields: [
+      "Fehlercode und -ort",
+      "Fehler-Ort",
+      "HL7-Fehlerkode",
+      "Schweregrad",
+      "Anwendungsfehlerkode",
+      "Anwendungsfehlerparameter",
+      "Diagnoseinformation",
+      "Benutzerfreundliche Fehlermeldung",
+    ]
+  },
+  PID: {
+    name: "Patient Identification",
+    fields: [
+      "Set-ID",
+      "Patienten-ID (extern)",
+      "Patienten-ID-Liste",
+      "Alternative Patienten-ID",
+      "Patientenname",
+      "Name der Mutter (Mädchenname)",
+      "Geburtsdatum",
+      "Geschlecht",
+      "Patientenaliasname",
+      "Rasse",
+      "Patientenadresse",
+      "Landkreiscode",
+      "Telefonnummer (privat)",
+      "Telefonnummer (geschäftlich)",
+      "Primärsprache",
+      "Familienstand",
+      "Religion",
+      "Patientenkonto-Nummer",
+      "Sozialversicherungsnummer",
+      "Führerscheinnummer",
+      "Mutter-ID",
+      "Ethnie",
+      "Geburtsort",
+      "Indikator Mehrlingsgeburt",
+      "Mehrlings-Geburtsreihenfolge",
+      "Staatsangehörigkeit",
+      "Todesdatum/-uhrzeit",
+      "Todes-Indikator",
+      "Identitäts-Unbekannt-Indikator",
+      "Identitäts-Zuverlässigkeitscode",
+      "Letztes Aktualisierungsdatum/-uhrzeit",
+      "Letzte Aktualisierungseinrichtung",
+      "Gattungscode",
+      "Stamm",
+      "Nationalitätscode",
+      "Patientenalter",
+    ]
+  },
+  PV1: {
+    name: "Patient Visit",
+    fields: [
+      "Set-ID",
+      "Patientenklasse",
+      "Zugewiesener Aufenthaltsort",
+      "Aufnahmeart",
+      "Vorläufige Kontonummer",
+      "Vorheriger Aufenthaltsort",
+      "Behandelnder Arzt",
+      "Überweisender Arzt",
+      "Konsultierender Arzt",
+      "Krankenhausdienstcode",
+      "Indikator vorübergehende Abwesenheit",
+      "Re-Aufnahme-Indikator",
+      "Zuweisender Arzt",
+      "Zulassungsart",
+      "Ambulanzuummer",
+      "VIP-Indikator",
+      "Aufnahmearzt",
+      "Patientenart",
+      "Besuchs-Nummer",
+      "Finanzkode",
+      "Entladungsdisposition",
+      "Entlassungsort",
+      "Diätkode",
+      "Kode für Servicesleistung",
+      "Bettenentlassungsstatus",
+      "Kontokode",
+      "Kreditbewertung",
+      "Vertrag-Code",
+      "Vertragsbeginn",
+      "Vertragsbetrag",
+      "Vertragsperiode",
+      "Zinscode",
+      "Transferkosten",
+      "Diagnosekode (PV1)",
+      "Behandelnder Arzt (PV1)",
+      "Dienstleistungsübertragungsarzt",
+      "Außenpatientenbesuchs-Nummer",
+      "Aufnahmedatum/-uhrzeit",
+      "Entlassungsdatum/-uhrzeit",
+      "Aktueller Patientenbilanz",
+      "Gesamtlasten",
+      "Gesamtkredite",
+      "Kontostand",
+      "Ausstehend",
+      "Geburtsinformation",
+      "Ungültige Ansprüche",
+      "Besuchsindikator",
+      "Anderer Arzt",
+    ]
+  },
+  PV2: {
+    name: "Patient Visit – Additional Information",
+    fields: [
+      "Vorangegangener ausstehender Aufenthaltsort",
+      "Unterkunftstyp",
+      "Zugelassene DRG-Diagnose",
+      "Zugelassene DRG-Prozedur",
+      "Spezialaufenthaltstage",
+      "Zugelassene Aufenthaltsdauer",
+      "Voraussichtliches Aufnahmedatum",
+      "Voraussichtliches Entlassungsdatum",
+      "Vorliegende Aufenthaltsdauer",
+      "Aktueller Aufenthaltsort",
+      "Besuchsbeschreibung",
+      "Überweisungsgrund",
+      "Überweisungsdatum",
+      "Aufenthaltsursache",
+      "Statuskode",
+      "Besuchsprioritätscode",
+      "Voraussichtliche Entlassungsversicherung",
+      "Voraussichtliche Aktivitätsplanung",
+      "Voraussichtliche Entlassungsmethode",
+      "Tatsächliche Aufenthaltsdauer (Tage)",
+      "Tatsächliche Verweildauer",
+      "Besuchsschutzindikator",
+      "Klinischer Informationsstatus",
+      "Erstversicherungsart",
+      "Geburtsmerkmale",
+      "Entlassungsort",
+      "Übernahmedatum/-uhrzeit",
+      "Außenpatientenbesuch",
+      "Besuchs-Nachfolgeindikator",
+      "Besuchsnachfolgetermin",
+      "Erwartetes Besuchsende",
+    ]
+  },
+  EVN: {
+    name: "Event Type",
+    fields: [
+      "Ereignistyp-Code",
+      "Aufgezeichnetes Datum/Uhrzeit",
+      "Geplantes Datum/Uhrzeit des Ereignisses",
+      "Ereignisgrund-Code",
+      "Operateur",
+      "Ereigniseingetreten-Datum/-uhrzeit",
+      "Ereigniseinrichtung",
+    ]
+  },
+  OBR: {
+    name: "Observation Request",
+    fields: [
+      "Set-ID",
+      "Auftragsstellernummer",
+      "Auftragnehmer-Filler-Nummer",
+      "Universal-Dienstleistungsidentifikator",
+      "Priorität",
+      "Anforderungsdatum/-uhrzeit",
+      "Beobachtungsdatum/-uhrzeit",
+      "Beobachtungsende-Datum/-uhrzeit",
+      "Sammelvolumen",
+      "Sammler-Identifikator",
+      "Spezimen-Aktion-Code",
+      "Gefahr-Code",
+      "Relevante klinische Information",
+      "Probenentnahme-Datum/-uhrzeit",
+      "Probenentnahme-Ort",
+      "Auftragsrückruf-Telefon",
+      "Zuweisender Arzt/Anforderung",
+      "Auftragsannahmenummer",
+      "Ergebnisse kopiertKopien an",
+      "Übergeordneter Auftrag",
+      "Transportmodus",
+      "Grund für Untersuchung",
+      "Ergebnisinterpretation",
+      "Ergebnis-Einteilung",
+      "Ergebnisanzahl",
+      "Ergebnis-Status",
+      "Verknüpfter Ergebniswert",
+      "Platzierer-Feld-1",
+      "Platzierer-Feld-2",
+      "Ergebnis-Datum/-uhrzeit",
+      "Technologe",
+      "Transskriptionist",
+      "Geplantes Datum/Uhrzeit",
+      "Anzahl der Proben",
+      "Transportlogistik der gesammelten Probe",
+      "Sammler-Kommentar",
+      "Transport-Anordnung",
+      "Transport-Temperatur",
+      "Ausgeführte Arztpraxis",
+      "Gefährlicher Stoff",
+      "Exposition-Code",
+      "Zusammenfügungs-ID",
+      "Geplanter Termin",
+      "Aktions-Code",
+      "Transport-Logistik",
+      "Auftragseingangs-Datum/-uhrzeit",
+    ]
+  },
+  OBX: {
+    name: "Observation/Result",
+    fields: [
+      "Set-ID",
+      "Werttyp",
+      "Beobachtungsidentifikator",
+      "Beobachtungs-Sub-ID",
+      "Beobachtungswert",
+      "Einheiten",
+      "Referenzbereich",
+      "Abnormale Flags",
+      "Wahrscheinlichkeit",
+      "Nature of Abnormal Test",
+      "Beobachtungsstatus",
+      "Effektive Datumsdatum für Referenzbereich",
+      "Benutzer-Definierte Zugriffskontrolle",
+      "Datum/Uhrzeit der Beobachtung",
+      "Produzenten-ID",
+      "Verantwortlicher Beobachter",
+      "Beobachtungsmethode",
+      "Ausrüstungsinstanz-ID",
+      "Datum/Uhrzeit der Analyse",
+      "Reserviert",
+      "Reserviert",
+      "Reserviert",
+      "Verarbeitende Einheit",
+      "Aktionscode",
+    ]
+  },
+  ORC: {
+    name: "Common Order",
+    fields: [
+      "Auftrags-Steuerungs-Code",
+      "Auftragsstellernummer (Placer)",
+      "Auftragnehmer-Filler-Nummer",
+      "Gruppenauftragnummer des Platzierers",
+      "Auftragsstatus",
+      "Anforderungsmenge",
+      "Zeitpunkt der Anforderung",
+      "Elternteil",
+      "Datum/Uhrzeit der Transaktion",
+      "Eingegeben von",
+      "Verifiziert von",
+      "Auftrag gemeldet von",
+      "Telefoncode des Eingebenden",
+      "Auftrag-Rückrufnummer",
+      "Datum/Uhrzeit Eingabe",
+      "Auftrag-Steuerungscode",
+      "Zuweisender Arzt/Anforderung",
+      "Eingebende Organisation",
+      "Eingebende Einrichtung",
+      "Auftragseingangsort",
+      "Auftragsstellungs-Datum/-uhrzeit",
+      "Anforderungsanfangs-Datum/-uhrzeit",
+      "Anforderungsende-Datum/-uhrzeit",
+      "Auftragsstatus-Datum/-uhrzeit",
+      "Auftragskontrollcode-Grund",
+      "Auftragstyp",
+      "Transaktionserlaubnis",
+      "Fortgeschrittenes Entscheidungsdokument",
+    ]
+  },
+  NTE: {
+    name: "Notes and Comments",
+    fields: [
+      "Set-ID",
+      "Quellcode",
+      "Kommentar",
+      "Kommentar-Typ",
+      "Eingegeben von",
+      "Datum/Uhrzeit Eingabe",
+      "Effektives Datum",
+      "Ablaufdatum",
+    ]
+  },
+  IN1: {
+    name: "Insurance",
+    fields: [
+      "Set-ID",
+      "Versicherungsplan-ID",
+      "Versicherungsgesellschaft-ID",
+      "Name der Versicherungsgesellschaft",
+      "Adresse der Versicherungsgesellschaft",
+      "Telefonkontakt der Versicherungsgesellschaft",
+      "Versicherungsgesellschaft-Kontaktperson",
+      "Versicherungsgesellschaft-Kontaktpersonen-Telefon",
+      "Gruppennnummer",
+      "Gruppenname",
+      "Versicherten-Arbeitgeber-ID",
+      "Name des Arbeitgebers der versicherten Person",
+      "Plan-Effektivdatum",
+      "Plan-Ablaufdatum",
+      "Autorisierungsinformation",
+      "Plantyp",
+      "Name des Versicherungsnehmers",
+      "Beziehung des Versicherungsnehmers zum Patienten",
+      "Geburtsdatum des Versicherungsnehmers",
+      "Adresse des Versicherungsnehmers",
+      "Kontakt des Versicherungsnehmers",
+      "Telefon des Versicherungsnehmers",
+      "Zertifikatsnummer",
+      "Datum der Versicherung",
+      "Kontodaten des Arbeitgebers",
+      "Typ der Versicherungsgesellschaft",
+      "Koordination der Leistungen",
+      "Koordinationsdatum",
+      "Beziehung des Patienten zur versicherten Person",
+      "Wert der Signatur",
+      "Autorisierungscode",
+      "Mitversicherter-Namenstyp",
+      "Verifikationsstatus",
+      "Typ der vorausgegangenen Krankenversicherung",
+      "Typ der Krankenversicherung",
+      "Patienten-Überweisungs-Code",
+      "Übernahmedatum",
+      "Übernahmeversicherungsplanung",
+      "Einschreibungsdatum",
+      "Policenablaufdatum",
+      "Versicherter-Beschäftigungsstatus",
+      "Versicherter-Administrativ-Geschlecht",
+      "Versicherter-Beschäftigungsort",
+      "Verifizierungs-Datum/-uhrzeit",
+      "Prädikat-Indikator",
+      "Kopf-Deckungsbetrag",
+      "Arbeitgeber-Name",
+      "Arbeitgeber-Adresse",
+      "Arbeitgeber-Kontakt",
+      "Arbeitgeber-Telefon",
+      "Versicherter-Beschäftigungsstatus",
+      "Kopf-Deckungsbetrag",
+    ]
+  },
+  AL1: {
+    name: "Allergy Information",
+    fields: [
+      "Set-ID",
+      "Allergen-Typcode",
+      "Allergen-Code/-Mnemonic/-Beschreibung",
+      "Reaktion Schweregrad",
+      "Allergie-Reaktionscode",
+      "Identifikationsdatum",
+    ]
+  },
+  DG1: {
+    name: "Diagnosis",
+    fields: [
+      "Set-ID",
+      "Diagnose-Kodierungsmethode",
+      "Diagnosecode",
+      "Diagnosebeschreibung",
+      "Diagnosedatum/-uhrzeit",
+      "Diagnosetyp",
+      "Hauptdiagnose-Referenznummer",
+      "Diagnosebezogene Gruppe",
+      "DRG-Genehmigungsindikator",
+      "DRG-Schweregrad",
+      "Diagnoseprioritätskode",
+      "Diagnose-Arzt",
+      "Diagnose-ICD-Kode-Code",
+      "Abrechnungsgruppierung",
+      "DRG-Genehmigungsindikator-Datum/-uhrzeit",
+      "Diagnose-Datum",
+      "DRG-Gruppe-Revisions-Datum",
+      "Diagnose-Priorität",
+      "Treffsicherheit",
+      "Beziehungs-Diagnose-Code",
+      "Verzeichnis-Kategorie",
+      "Diagnose-Abschnitt",
+    ]
+  },
+  PR1: {
+    name: "Procedures",
+    fields: [
+      "Set-ID",
+      "Prozedur-Kodierungsmethode",
+      "Prozedurkode",
+      "Prozedurebeschreibung",
+      "Datum/Uhrzeit der Prozedur",
+      "Prozedur-Funktionaler-Typ",
+      "Dauer der Prozedur",
+      "Anästhesiologie",
+      "Anästhesiedauer",
+      "Alternativanästhesiologie",
+      "Anordner der Prozedur",
+      "Wert zum Prozedurcode",
+      "Zugehöriger Wert",
+      "Ärztlicher Prozedur-Code",
+      "Prozeduridenfikationsklasse",
+      "Prozedur-Modifikator",
+      "Prozedur-DRG-Typ",
+      "Gewebe-Typ-Code",
+      "Prozedurkennzeichen",
+      "Aktionscode",
+    ]
+  },
+  SCH: {
+    name: "Scheduling Activity Information",
+    fields: [
+      "Platzierer-Terminkennung",
+      "Filler-Terminkennung",
+      "Occurrence-Nummer",
+      "Platzierer-Gruppen-Nummer",
+      "Termintyp",
+      "Terminreason",
+      "Appointmentdatum/-uhrzeit",
+      "Appointment-Dauer",
+      "Appointment-Dauer-Einheiten",
+      "Appointment-Kontrollcode",
+      "Terminveranstaltungs-Status",
+      "Terminpräferenz",
+      "Terminpriorität",
+      "Platzierer-Kontakt",
+      "Platzierer-Kontakt-Rufnummer",
+      "Platzierer-Kontakt-Adresse",
+      "Platzierer-Kontakt-Standort",
+      "Filler-Kontakt",
+      "Filler-Kontakt-Rufnummer",
+      "Filler-Kontakt-Adresse",
+      "Filler-Kontakt-Standort",
+      "Platzierer-Auftragsnummer",
+      "Filler-Auftragsnummer",
+      "Filler-Status-Code",
+    ]
+  },
+  QRD: {
+    name: "Query Definition",
+    fields: [
+      "Datum/Uhrzeit der Abfrage",
+      "Abfrageformat-Code",
+      "Abfragemodus",
+      "Abfragekennzeichen",
+      "Verzögerungsquantität",
+      "Anforderungsquantität-Einheiten",
+      "Anforderungsquantität-Limit",
+      "Maximale Responseteile",
+      "Abfragenamenkode",
+      "Abfrage Wer-Subjekt-Filter",
+      "Abfrage-Wozu-Subjekt-Filter",
+      "Abfrage-Was-Subjekt-Filter",
+      "Abfrage-Datum/Uhrzeit-Zeitraum-Filter",
+    ]
+  },
+  ZBE: {
+    name: "Custom Segment (Z-Segment)",
+    fields: []
+  },
+};
+
+// Component definitions for key fields
+const COMPONENTS = {
+  "MSH.9": ["Nachrichtencode", "Trigger-Ereignis", "Nachrichtenstruktur"],
+  "MSH.3": ["Namespace-ID", "Universal-ID", "Universal-ID-Typ"],
+  "MSH.4": ["Namespace-ID", "Universal-ID", "Universal-ID-Typ"],
+  "MSH.5": ["Namespace-ID", "Universal-ID", "Universal-ID-Typ"],
+  "MSH.6": ["Namespace-ID", "Universal-ID", "Universal-ID-Typ"],
+  "PID.3": ["ID-Nummer", "Prüfziffer", "Prüfziffermethode", "Zuweisende Behörde", "ID-Typcode", "Zuweisende Einrichtung", "Effektives Datum", "Ablaufdatum", "Zuweisungsgerichtsbarkeit", "Sicherheitsprüfungsdigit"],
+  "PID.5": ["Nachname", "Vorname", "Zweiter Vorname", "Suffix", "Präfix", "Grad", "Namenstyp", "Namenspräsentation", "Namensreihenfolge", "Effektives Datum", "Ablaufdatum", "Professionelles Suffix"],
+  "PID.11": ["Straße", "Andere Angaben", "Stadt", "Bundesland", "Postleitzahl", "Land", "Adresstyp", "Andere Angaben", "Landkreis", "Zensuszone", "Adresstyp"],
+  "PID.13": ["Telefonnummer", "Telekommunikations-Verwendungscode", "Telekommunikations-Gerätetyp", "E-Mail-Adresse", "Landesvorwahl", "Vorwahl", "Lokale Nummer", "Durchwahl"],
+  "PV1.3": ["Punkt-Identifikator", "Raum", "Bett", "Einrichtung", "Standortstatus", "Patientenstandort-Typ", "Gebäude", "Etage", "Adresse"],
+  "PV1.7": ["ID-Nummer", "Nachname", "Vorname", "Zweiter Vorname", "Suffix", "Präfix", "Grad", "Quellentabelle", "Zuweisende Behörde"],
+  "PV1.8": ["ID-Nummer", "Nachname", "Vorname", "Zweiter Vorname", "Suffix", "Präfix", "Grad", "Quellentabelle", "Zuweisende Behörde"],
+  "OBR.4": ["Identifikator", "Text", "Codesystem", "Alternativer Identifikator", "Alternativer Text", "Alternatives Codesystem"],
+  "OBX.3": ["Identifikator", "Text", "Codesystem", "Alternativer Identifikator", "Alternativer Text", "Alternatives Codesystem"],
+  "OBX.5": ["Identifikator", "Text", "Codesystem", "Alternativer Identifikator", "Alternativer Text", "Alternatives Codesystem"],
+  "OBX.6": ["Identifikator", "Text", "Codesystem"],
+};
+
+// ─── Sample Messages ────────────────────────────────────────────────────────
+
+const SAMPLES = {
+  adt: `MSH|^~\\&|KIS|KRANKENHAUS|LAB|LABOR|20240315143022||ADT^A01^ADT_A01|MSG20240315001|P|2.5|||NE|AL|DE|8859/1
+EVN|A01|20240315143022|||SYSTEM
+PID|1||123456789^^^KIS^PI~987654321^^^GKV^SS||Mustermann^Max^Karl^Dr.||19800101|M|||Musterstraße 1^^München^^80331^DE^H||+49891234567^PRN^PH|||M|EV|ACC-2024-001|123456789
+PV1|1|I|KARDIOLOGIE^Zimmer-12^Bett-A^^^Hauptgebäude^2.OG||||||Meier^Hans^Dr.^^^Dr.med.||||||||GKV|BSP-2024-9876|||||||||||||||||||A|20240315143000
+AL1|1|DA|PENICILLIN^Penicillin^L|SV|Hautausschlag~Atemnot|20200101
+DG1|1|ICD10|I21.0^Akuter transmuraler Myokardinfarkt der Vorderwand^ICD-10-GM||20240315|A
+NTE|1|L|Patient kam mit Brustschmerzen und Atemnot in die Notaufnahme.`,
+
+  oru: `MSH|^~\\&|LAB|ZENTRALLABOR|KIS|KRANKENHAUS|20240315150000||ORU^R01^ORU_R01|LAB20240315001|P|2.5
+PID|1||123456789^^^KIS^PI||Mustermann^Max||19800101|M
+OBR|1|ORD-2024-001|LAB-2024-001|1759-0^Leukocytes^LN|||20240315145500|20240315150000||||A|||Meier^Hans^Dr.||||||20240315150000|||F
+OBX|1|NM|1759-0^Leukocyten^LN||8.5|10*3/ul|4.0-10.0|N|||F|||20240315150000
+OBX|2|NM|718-7^Hämoglobin^LN||13.2|g/dl|13.5-17.5|L|||F|||20240315150000
+OBX|3|NM|4544-3^Hämatokrit^LN||41|%|39.0-50.0|N|||F|||20240315150000
+OBX|4|NM|787-2^MCV^LN||88|fl|80-100|N|||F|||20240315150000
+NTE|1|L|Befund erstellt durch automatische Analyse.
+NTE|2|L|Qualitätskontrolle bestanden.`,
+
+  ack: `MSH|^~\\&|LAB|LABOR|KIS|KRANKENHAUS|20240315150100||ACK^R01|ACK20240315001|P|2.5
+MSA|AA|LAB20240315001|Nachricht erfolgreich verarbeitet
+ERR|||0^Message accepted^HL70357|I`
+};
+
+// ─── Parser ─────────────────────────────────────────────────────────────────
+
+function parseHL7(raw) {
+  // Normalize line endings and segment separators
+  let text = raw.replace(/\r\n/g, '\r').replace(/\n/g, '\r').trim();
+  const segments = text.split('\r').filter(s => s.trim().length > 0);
+
+  if (segments.length === 0) throw new Error("Keine Segmente gefunden.");
+
+  const firstSeg = segments[0];
+  if (!firstSeg.startsWith('MSH')) throw new Error("Erste Segment muss MSH sein.");
+
+  // Extract delimiters from MSH
+  const fieldSep = firstSeg[3] || '|';
+  const encodingChars = firstSeg[4] === fieldSep ? '' : firstSeg.substring(4, 8);
+  const compSep = encodingChars[0] || '^';
+  const repSep  = encodingChars[1] || '~';
+  const escChar = encodingChars[2] || '\\';
+  const subSep  = encodingChars[3] || '&';
+
+  return segments.map(seg => parseSegment(seg, fieldSep, compSep, repSep, escChar, subSep));
+}
+
+function parseSegment(seg, fieldSep, compSep, repSep, escChar, subSep) {
+  const name = seg.substring(0, 3);
+  const parts = seg.split(fieldSep);
+  const def = SEGMENTS[name] || (name.startsWith('Z') ? { name: `Z-Segment (${name})`, fields: [] } : { name: "Unbekanntes Segment", fields: [] });
+
+  let fields = [];
+
+  if (name === 'MSH') {
+    // MSH field 1 = field separator itself
+    fields.push({ num: 1, name: def.fields[0] || "Feldtrennzeichen", value: [[{ val: fieldSep, label: null }]], raw: fieldSep });
+    fields.push({ num: 2, name: def.fields[1] || "Kodierungszeichen", value: [[{ val: parts[2] || '', label: null }]], raw: parts[2] || '' });
+    for (let i = 3; i < parts.length; i++) {
+      const raw = parts[i];
+      const fieldNum = i + 1;
+      fields.push({
+        num: fieldNum,
+        name: def.fields[fieldNum - 1] || `Feld ${fieldNum}`,
+        value: parseFieldValue(raw, compSep, repSep, subSep, `${name}.${fieldNum}`),
+        raw
+      });
+    }
+  } else {
+    for (let i = 1; i < parts.length; i++) {
+      const raw = parts[i];
+      fields.push({
+        num: i,
+        name: def.fields[i - 1] || `Feld ${i}`,
+        value: parseFieldValue(raw, compSep, repSep, subSep, `${name}.${i}`),
+        raw
+      });
+    }
+  }
+
+  return { name, def, fields };
+}
+
+function parseFieldValue(raw, compSep, repSep, subSep, fieldKey) {
+  if (!raw) return null;
+  // Handle repetitions
+  const reps = raw.split(repSep);
+  return reps.map(rep => parseComponents(rep, compSep, subSep, fieldKey));
+}
+
+function parseComponents(rep, compSep, subSep, fieldKey) {
+  const comps = rep.split(compSep);
+  const compDefs = COMPONENTS[fieldKey] || [];
+  return comps.map((c, i) => ({
+    val: c,
+    label: compDefs[i] || (comps.length > 1 ? `Komponente ${i + 1}` : null)
+  }));
+}
+
+// ─── Renderer ────────────────────────────────────────────────────────────────
+
+function renderSegments(segments) {
+  const output = document.getElementById('output');
+  const index = document.getElementById('seg-index');
+  const statsBar = document.getElementById('stats-bar');
+
+  output.innerHTML = '';
+  index.innerHTML = '';
+  index.style.display = 'flex';
+
+  // Stats
+  const totalFields = segments.reduce((a, s) => a + s.fields.filter(f => f.raw).length, 0);
+  statsBar.innerHTML = `
+    <div class="stat-item"><div class="stat-dot"></div>${segments.length} Segmente</div>
+    <div class="stat-item"><div class="stat-dot" style="background:var(--green)"></div>${totalFields} Felder</div>
+  `;
+
+  segments.forEach((seg, idx) => {
+    // Index pill
+    const pill = document.createElement('span');
+    pill.className = `seg-pill seg-${seg.name}`;
+    pill.textContent = seg.name;
+    pill.style.cssText = getSegStyle(seg.name);
+    pill.onclick = () => document.getElementById(`seg-${idx}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    index.appendChild(pill);
+
+    // Segment card
+    const card = document.createElement('div');
+    card.className = 'segment-card';
+    card.id = `seg-${idx}`;
+
+    const nonEmpty = seg.fields.filter(f => f.raw).length;
+
+    card.innerHTML = `
+      <div class="segment-header" onclick="toggleCard(this)">
+        <span class="seg-tag seg-${seg.name}">${seg.name}</span>
+        <span class="seg-name">${seg.def.name}</span>
+        <span class="seg-count">${nonEmpty} Felder</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="segment-body">
+        ${seg.fields.map(f => renderField(f, seg.name)).join('')}
+      </div>
+    `;
+
+    output.appendChild(card);
+  });
+}
+
+function getSegStyle(name) {
+  const knownSegs = Object.keys(SEGMENTS);
+  if (knownSegs.includes(name)) return '';
+  if (name.startsWith('Z')) return 'background:#2a1e3f;color:#c4b5fd;';
+  return 'background:#252525;color:#888;';
+}
+
+function renderField(field, segName) {
+  const hasValue = field.raw && field.raw.length > 0;
+  const cls = hasValue ? 'field-row has-value' : 'field-row';
+
+  let valueHtml;
+  if (!hasValue) {
+    valueHtml = '<span class="field-value empty">—</span>';
+  } else {
+    const reps = field.value;
+    if (reps.length === 1) {
+      valueHtml = `<div class="field-value">${renderComponents(reps[0])}</div>`;
+    } else {
+      const repsHtml = reps.map((rep, i) =>
+        `<div class="repeat-item">
+          <span class="repeat-badge">[${i + 1}]</span>
+          ${renderComponents(rep)}
+        </div>`
+      ).join('');
+      valueHtml = `<div class="field-value"><div class="repeat-group">${repsHtml}</div></div>`;
+    }
+  }
+
+  return `
+    <div class="${cls}">
+      <div class="field-num">${field.num}</div>
+      <div class="field-name">${escHtml(field.name)}</div>
+      ${valueHtml}
+    </div>
+  `;
+}
+
+function renderComponents(comps) {
+  if (comps.length === 1 && !comps[0].label) {
+    return `<span class="component-val">${escHtml(comps[0].val)}</span>`;
+  }
+  return comps.filter(c => c.val || c.label).map((c, i) => `
+    <span class="component">
+      ${i > 0 && comps[i - 1].val ? '<span class="component-sep">^</span>' : ''}
+      ${c.val ? `<span class="component-val">${escHtml(c.val)}</span>` : ''}
+      ${c.label && c.val ? `<span class="component-label">${escHtml(c.label)}</span>` : ''}
+    </span>
+  `).join('');
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function toggleCard(header) {
+  header.closest('.segment-card').classList.toggle('collapsed');
+}
+
+// ─── Actions ─────────────────────────────────────────────────────────────────
+
+function parse() {
+  const raw = document.getElementById('input').value.trim();
+  const output = document.getElementById('output');
+  const index = document.getElementById('seg-index');
+  const statsBar = document.getElementById('stats-bar');
+
+  if (!raw) {
+    output.innerHTML = '<div class="error-box">⚠ Bitte eine HL7 Nachricht eingeben.</div>';
+    index.style.display = 'none';
+    statsBar.innerHTML = '';
+    return;
+  }
+
+  try {
+    const segments = parseHL7(raw);
+    renderSegments(segments);
+  } catch (e) {
+    output.innerHTML = `<div class="error-box">⚠ Fehler: ${escHtml(e.message)}</div>`;
+    index.style.display = 'none';
+    statsBar.innerHTML = '';
+  }
+}
+
+function clearInput() {
+  document.getElementById('input').value = '';
+  document.getElementById('output').innerHTML = `
+    <div class="empty-state">
+      <div class="icon">⚕</div>
+      <p>HL7 Nachricht eingeben und auf <strong>Parsen</strong> klicken, um die Segmente zu analysieren.</p>
+    </div>
+  `;
+  document.getElementById('seg-index').style.display = 'none';
+  document.getElementById('stats-bar').innerHTML = '';
+}
+
+function loadSample(type) {
+  document.getElementById('input').value = SAMPLES[type];
+  parse();
+}
+
+// Auto-parse on Ctrl+Enter
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') parse();
+});
+</script>
+</body>
+</html>
