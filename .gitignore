@@ -11,3 +11,7 @@
 
 # Logs
 *.log
+
+# Claude
+.claude/
+skills-lock.json
