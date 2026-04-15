@@ -5,10 +5,15 @@ Ein browserbasierter Parser für HL7 v2.x Nachrichten – ohne Abhängigkeiten, 
 ## Features
 
 - **Vollständiger HL7 v2.x Parser** – erkennt Feldtrennzeichen und Kodierungszeichen automatisch aus dem MSH-Segment
+- **MLLP-Framing** wird automatisch erkannt und entfernt
 - **Deutsche Feldbezeichnungen** für alle Standardsegmente
 - **Komponenten-Analyse** – zusammengesetzte Felder (Name, Adresse, CWE-Codes) werden mit einzelnen Komponentenbezeichnungen dargestellt
 - **Wiederholungsfelder** – `~`-getrennte Werte werden einzeln angezeigt
-- **Segment-Index** – Schnellnavigation per Klick
+- **Feldsuche** – Live-Filterung über alle Segmente und Feldwerte
+- **Kopieren** – Feldwerte per Klick in die Zwischenablage kopieren
+- **Rohdaten-Ansicht** – jedes Segment kann als Rohzeile eingeblendet werden
+- **Segment-Index** – Schnellnavigation per Klick, mit Segmentzähler
+- **Alle auf-/zuklappen** – Segmentdarstellung auf Knopfdruck ein- oder ausblenden
 - **Beispielnachrichten** – ADT A01 (Aufnahme), ORU R01 (Laborbefund), ACK
 
 ## Unterstützte Segmente
@@ -21,6 +26,11 @@ Ein browserbasierter Parser für HL7 v2.x Nachrichten – ohne Abhängigkeiten, 
 | EVN | Event Type |
 | PID | Patient Identification |
 | PV1 / PV2 | Patient Visit |
+| NK1 | Next of Kin / Associated Parties |
+| MRG | Merge Patient Information |
+| GT1 | Guarantor |
+| ROL | Role |
+| ACC | Accident |
 | ORC | Common Order |
 | OBR | Observation Request |
 | OBX | Observation/Result |
