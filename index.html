@@ -92,11 +92,14 @@
       align-items: center;
       justify-content: space-between;
       gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .panel-header .actions {
       display: flex;
       gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
     }
 
     textarea {
@@ -125,10 +128,7 @@
       transition: all 0.15s;
     }
 
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-    }
+    .btn-primary { background: var(--accent); color: #fff; }
     .btn-primary:hover { background: #4a7de0; }
 
     .btn-ghost {
@@ -223,31 +223,55 @@
     .seg-SCH { background: #1e3f3a; color: var(--cyan); }
     .seg-RGS { background: #2a1e3f; color: #c4b5fd; }
     .seg-AIG, .seg-AIL, .seg-AIP, .seg-AIS { background: #1e3f2a; color: var(--green); }
+    .seg-NK1 { background: #2a3f2a; color: #6ee7b7; }
+    .seg-GT1 { background: #3f3f1e; color: #fde68a; }
+    .seg-ROL { background: #1e2a3f; color: #93c5fd; }
+    .seg-MRG { background: #3f1e2a; color: #fda4af; }
+    .seg-ACC { background: #3f2a2a; color: #fca5a5; }
     .seg-unknown { background: #252525; color: #888; }
 
-    .seg-name {
-      font-size: 0.9rem;
+    .seg-name { font-size: 0.9rem; font-weight: 600; flex: 1; }
+    .seg-count { font-size: 0.75rem; color: var(--text-muted); }
+
+    .seg-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn-icon {
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      padding: 0.2rem 0.45rem;
       font-weight: 600;
-      flex: 1;
+      font-family: monospace;
+      cursor: pointer;
+      transition: all 0.15s;
+      line-height: 1;
     }
+    .btn-icon:hover { border-color: var(--border); color: var(--text); background: var(--surface); }
 
-    .seg-count {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
-    .chevron {
-      color: var(--text-muted);
-      transition: transform 0.2s;
-      font-size: 0.75rem;
-    }
-
+    .chevron { color: var(--text-muted); transition: transform 0.2s; font-size: 0.75rem; }
     .segment-card.collapsed .chevron { transform: rotate(-90deg); }
     .segment-card.collapsed .segment-body { display: none; }
 
-    .segment-body {
-      padding: 0;
+    .segment-body { padding: 0; }
+
+    .raw-line {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: rgba(0,0,0,0.2);
+      padding: 0.5rem 0.75rem;
+      border-top: 1px solid var(--border);
+      word-break: break-all;
+      overflow-wrap: anywhere;
+      display: none;
     }
+    .raw-line.visible { display: block; }
 
     .field-row {
       display: grid;
@@ -260,8 +284,9 @@
     }
 
     .field-row:last-child { border-bottom: none; }
-
+    .field-row.hidden { display: none; }
     .field-row.has-value:hover { background: rgba(91, 141, 238, 0.04); }
+    .field-row.has-value:hover .copy-btn { opacity: 1; }
 
     .field-num {
       padding: 0.55rem 0.5rem;
@@ -299,24 +324,41 @@
       gap: 0.25rem;
       min-width: 0;
       overflow-wrap: anywhere;
+      position: relative;
     }
 
-    .field-value.empty { color: var(--text-muted); font-style: italic; font-family: inherit; font-size: 0.78rem; }
-
-    .component {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
+    .field-value.empty {
+      color: var(--text-muted);
+      font-style: italic;
+      font-family: inherit;
+      font-size: 0.78rem;
     }
 
-    .component-sep {
-      color: var(--border);
-      font-size: 0.85em;
+    .copy-btn {
+      position: absolute;
+      right: 0.4rem;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-size: 0.68rem;
+      padding: 0.15rem 0.4rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+      font-weight: 600;
+      line-height: 1.4;
+      white-space: nowrap;
     }
+    .copy-btn:hover { color: var(--text); border-color: var(--accent); }
+    .copy-btn.copied { color: var(--green); border-color: var(--green); opacity: 1; }
 
-    .component-val {
-      color: var(--text);
-    }
+    .component { display: inline-flex; align-items: center; gap: 0.25rem; }
+    .component-sep { color: var(--border); font-size: 0.85em; }
+    .component-val { color: var(--text); }
 
     .component-label {
       font-size: 0.68rem;
@@ -327,18 +369,8 @@
       font-family: inherit;
     }
 
-    .repeat-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.2rem;
-      width: 100%;
-    }
-
-    .repeat-item {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
+    .repeat-group { display: flex; flex-direction: column; gap: 0.2rem; width: 100%; }
+    .repeat-item { display: flex; align-items: center; gap: 0.4rem; }
 
     .repeat-badge {
       font-size: 0.65rem;
@@ -350,7 +382,6 @@
       white-space: nowrap;
     }
 
-    /* Error */
     .error-box {
       background: rgba(248, 113, 113, 0.1);
       border: 1px solid rgba(248, 113, 113, 0.3);
@@ -363,18 +394,11 @@
       gap: 0.75rem;
     }
 
-    .stats-bar {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
+    .stats-bar { display: flex; gap: 1rem; align-items: center; font-size: 0.75rem; color: var(--text-muted); }
     .stat-item { display: flex; align-items: center; gap: 0.35rem; }
     .stat-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 
-    /* Segment index tabs */
+    /* Segment index */
     .seg-index {
       padding: 0.5rem 1.25rem;
       background: var(--surface);
@@ -382,6 +406,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 0.35rem;
+      align-items: center;
     }
 
     .seg-pill {
@@ -393,9 +418,64 @@
       font-family: monospace;
       border: 1px solid transparent;
       transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .seg-pill:hover { border-color: var(--accent); }
+
+    .pill-count {
+      font-size: 0.6rem;
+      background: rgba(255,255,255,0.15);
+      padding: 0.05rem 0.3rem;
+      border-radius: 3px;
     }
 
-    .seg-pill:hover { border-color: var(--accent); }
+    /* Search */
+    .search-wrap { position: relative; display: flex; align-items: center; }
+
+    .search-input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.78rem;
+      padding: 0.3rem 0.6rem 0.3rem 1.8rem;
+      outline: none;
+      width: 180px;
+      transition: border-color 0.15s;
+      font-family: inherit;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--text-muted); }
+
+    .search-icon {
+      position: absolute;
+      left: 0.5rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--surface2);
+      border: 1px solid var(--green);
+      color: var(--green);
+      font-size: 0.8rem;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.25s;
+      pointer-events: none;
+      z-index: 100;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
 
     .sample-btn {
       font-size: 0.72rem;
@@ -412,6 +492,7 @@
     @media (max-width: 600px) {
       .panel { height: 35vh; }
       .field-row { grid-template-columns: 2rem minmax(120px, 160px) 1fr; }
+      .search-input { width: 130px; }
     }
   </style>
 </head>
@@ -441,14 +522,23 @@ Beispiel:
 MSH|^~\&|SENDER|FACILITY|RECEIVER|DEST|20240101120000||ADT^A01|MSG001|P|2.5
 PID|1||123456^^^MPI||Mustermann^Max^Karl||19800101|M|||Musterstraße 1^^München^^80331^DE
 
-Segmente werden durch Zeilenumbrüche oder &#x0D; getrennt." spellcheck="false"></textarea>
+Segmente werden durch Zeilenumbrüche oder &#x0D; getrennt.
+MLLP-Framing wird automatisch entfernt." spellcheck="false"></textarea>
   </div>
 
   <!-- Output Panel -->
   <div class="output-panel">
     <div class="panel-header">
       <span>Analysierte Segmente</span>
-      <div id="stats-bar" class="stats-bar"></div>
+      <div class="actions">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input type="search" id="search" class="search-input" placeholder="Suchen…" oninput="filterFields(this.value)">
+        </div>
+        <button class="btn-ghost" onclick="collapseAll()">Alle zuklappen</button>
+        <button class="btn-ghost" onclick="expandAll()">Alle aufklappen</button>
+        <div id="stats-bar" class="stats-bar"></div>
+      </div>
     </div>
     <div id="seg-index" class="seg-index" style="display:none"></div>
     <div id="output" class="output-body">
@@ -460,7 +550,12 @@ Segmente werden durch Zeilenumbrüche oder &#x0D; getrennt." spellcheck="false">
   </div>
 </div>
 
+<div id="toast" class="toast">Kopiert ✓</div>
+
 <script>
+// ─── Active delimiters (set during parse, used by renderer) ─────────────────
+let _delimiters = { fieldSep: '|', compSep: '^', repSep: '~', escChar: '\\', subSep: '&' };
+
 // ─── HL7 Segment & Field Definitions ────────────────────────────────────────
 
 const SEGMENTS = {
@@ -574,7 +669,7 @@ const SEGMENTS = {
       "Re-Aufnahme-Indikator",
       "Zuweisender Arzt",
       "Zulassungsart",
-      "Ambulanzuummer",
+      "Ambulanznummer",
       "VIP-Indikator",
       "Aufnahmearzt",
       "Patientenart",
@@ -583,7 +678,7 @@ const SEGMENTS = {
       "Entladungsdisposition",
       "Entlassungsort",
       "Diätkode",
-      "Kode für Servicesleistung",
+      "Kode für Serviceleistung",
       "Bettenentlassungsstatus",
       "Kontokode",
       "Kreditbewertung",
@@ -617,7 +712,7 @@ const SEGMENTS = {
       "Unterkunftstyp",
       "Zugelassene DRG-Diagnose",
       "Zugelassene DRG-Prozedur",
-      "Spezialaufenthaltstage",
+      "Spezialaufenthaltsdauer (Tage)",
       "Zugelassene Aufenthaltsdauer",
       "Voraussichtliches Aufnahmedatum",
       "Voraussichtliches Entlassungsdatum",
@@ -658,12 +753,131 @@ const SEGMENTS = {
       "Ereigniseinrichtung",
     ]
   },
+  NK1: {
+    name: "Next of Kin / Associated Parties",
+    fields: [
+      "Set-ID",
+      "Name",
+      "Beziehung",
+      "Adresse",
+      "Telefonnummer (privat)",
+      "Telefonnummer (geschäftlich)",
+      "Kontaktrolle",
+      "Anfangsdatum",
+      "Enddatum",
+      "Berufsbezeichnung",
+      "Arbeitgeber-Name",
+      "Kontaktgrund",
+      "Name des Kontakts (NK1)",
+      "Organisations-Name",
+      "Telefonnummer für Kontakt",
+      "Adresse für Kontakt",
+      "Sprache",
+      "Kontaktmodus",
+      "Kontakt-Kommunikationspräferenz",
+      "Datum der letzten Aktualisierung",
+      "Einrichtung der letzten Aktualisierung",
+      "Wohnort",
+      "Bevorzugte Kontaktmethode",
+      "Bevorzugte Kontaktmethode-Beginn",
+      "Bevorzugte Kontaktmethode-Ende",
+      "Priorität der Kontaktmethode",
+      "Kontaktpersonenklasse",
+      "Kontaktpersonentyp",
+      "Administratives Geschlecht",
+      "Geburtsdatum",
+      "Wohnkategorie",
+      "Nationalität",
+      "Bürgerrechte",
+      "Lebensstatus",
+      "Rasse",
+      "Ethnie",
+      "Geburtsort",
+      "VIP-Indikator",
+    ]
+  },
+  MRG: {
+    name: "Merge Patient Information",
+    fields: [
+      "Vorherige Patienten-ID-Liste",
+      "Vorherige alternative Patienten-ID",
+      "Vorherige Patientenkonto-Nummer",
+      "Vorherige Patienten-ID (extern)",
+      "Vorherige Besuchs-Nummer",
+      "Vorherige alternative Besuchs-ID",
+      "Vorheriger Patientenname",
+    ]
+  },
+  GT1: {
+    name: "Guarantor",
+    fields: [
+      "Set-ID",
+      "Bürgen-Nummer",
+      "Bürgen-Name",
+      "Bürgen-Ehegatte-Name",
+      "Bürgen-Adresse",
+      "Bürgen-Telefon (privat)",
+      "Bürgen-Telefon (geschäftlich)",
+      "Bürgen-Geburtsdatum",
+      "Bürgen-Geschlecht",
+      "Bürgen-Art",
+      "Bürgen-Beziehung",
+      "Bürgen-Sozialversicherungsnummer",
+      "Beginn Bürgschaft",
+      "Ende Bürgschaft",
+      "Bürgschaftspriorität",
+      "Arbeitgeber-Name",
+      "Arbeitgeber-Adresse",
+      "Arbeitgeber-Telefon",
+      "Beschäftigungs-Beginn",
+      "Beschäftigungs-Ende",
+      "Beschäftigungsstatus",
+      "Anzahl der Unterhaltsberechtigten",
+      "Familienstand",
+      "Schuldner",
+      "Bürgen-Arbeitgeber-ID",
+      "Bürgen-Beschäftigungsstatus",
+      "Bürgen-Rasse",
+      "Bürgen-Ethnie",
+    ]
+  },
+  ROL: {
+    name: "Role",
+    fields: [
+      "Rollen-Instanz-ID",
+      "Aktions-Code",
+      "Rollencode",
+      "Rollenperson",
+      "Rollen-Beginn-Datum/-uhrzeit",
+      "Rollen-End-Datum/-uhrzeit",
+      "Rollendauer",
+      "Rollen-Aktionsbegründung",
+      "Anbieter-Art",
+      "Organisations-Einheit-Typ",
+      "Büro-/Heimtelefon",
+    ]
+  },
+  ACC: {
+    name: "Accident",
+    fields: [
+      "Unfalldatum/-uhrzeit",
+      "Unfallcode",
+      "Unfallort",
+      "Selbstverschuldet",
+      "Unfallkode-Änderungsindikator",
+      "Polizeimeldung",
+      "Unfall-Beschreibung",
+      "Eingebrachte Situation",
+      "Unfallland",
+      "Unfalladresse",
+    ]
+  },
   OBR: {
     name: "Observation Request",
     fields: [
       "Set-ID",
       "Auftragsstellernummer",
-      "Auftragnehmer-Filler-Nummer",
+      "Auftragnehmernummer (Filler)",
       "Universal-Dienstleistungsidentifikator",
       "Priorität",
       "Anforderungsdatum/-uhrzeit",
@@ -679,12 +893,12 @@ const SEGMENTS = {
       "Auftragsrückruf-Telefon",
       "Zuweisender Arzt/Anforderung",
       "Auftragsannahmenummer",
-      "Ergebnisse kopiertKopien an",
+      "Ergebnisse kopiert an",
       "Übergeordneter Auftrag",
       "Transportmodus",
       "Grund für Untersuchung",
       "Ergebnisinterpretation",
-      "Ergebnis-Einteilung",
+      "Ergebniseinteilung",
       "Ergebnisanzahl",
       "Ergebnis-Status",
       "Verknüpfter Ergebniswert",
@@ -692,7 +906,7 @@ const SEGMENTS = {
       "Platzierer-Feld-2",
       "Ergebnis-Datum/-uhrzeit",
       "Technologe",
-      "Transskriptionist",
+      "Transkriptionist",
       "Geplantes Datum/Uhrzeit",
       "Anzahl der Proben",
       "Transportlogistik der gesammelten Probe",
@@ -701,7 +915,7 @@ const SEGMENTS = {
       "Transport-Temperatur",
       "Ausgeführte Arztpraxis",
       "Gefährlicher Stoff",
-      "Exposition-Code",
+      "Expositions-Code",
       "Zusammenfügungs-ID",
       "Geplanter Termin",
       "Aktions-Code",
@@ -721,9 +935,9 @@ const SEGMENTS = {
       "Referenzbereich",
       "Abnormale Flags",
       "Wahrscheinlichkeit",
-      "Nature of Abnormal Test",
+      "Art des abnormalen Tests",
       "Beobachtungsstatus",
-      "Effektive Datumsdatum für Referenzbereich",
+      "Effektives Datum für Referenzbereich",
       "Benutzer-Definierte Zugriffskontrolle",
       "Datum/Uhrzeit der Beobachtung",
       "Produzenten-ID",
@@ -743,7 +957,7 @@ const SEGMENTS = {
     fields: [
       "Auftrags-Steuerungs-Code",
       "Auftragsstellernummer (Placer)",
-      "Auftragnehmer-Filler-Nummer",
+      "Auftragnehmernummer (Filler)",
       "Gruppenauftragnummer des Platzierers",
       "Auftragsstatus",
       "Anforderungsmenge",
@@ -754,9 +968,9 @@ const SEGMENTS = {
       "Verifiziert von",
       "Auftrag gemeldet von",
       "Telefoncode des Eingebenden",
-      "Auftrag-Rückrufnummer",
+      "Auftrags-Rückrufnummer",
       "Datum/Uhrzeit Eingabe",
-      "Auftrag-Steuerungscode",
+      "Auftrags-Steuerungscode",
       "Zuweisender Arzt/Anforderung",
       "Eingebende Organisation",
       "Eingebende Einrichtung",
@@ -795,7 +1009,7 @@ const SEGMENTS = {
       "Telefonkontakt der Versicherungsgesellschaft",
       "Versicherungsgesellschaft-Kontaktperson",
       "Versicherungsgesellschaft-Kontaktpersonen-Telefon",
-      "Gruppennnummer",
+      "Gruppennummer",
       "Gruppenname",
       "Versicherten-Arbeitgeber-ID",
       "Name des Arbeitgebers der versicherten Person",
@@ -837,8 +1051,6 @@ const SEGMENTS = {
       "Arbeitgeber-Adresse",
       "Arbeitgeber-Kontakt",
       "Arbeitgeber-Telefon",
-      "Versicherter-Beschäftigungsstatus",
-      "Kopf-Deckungsbetrag",
     ]
   },
   AL1: {
@@ -847,7 +1059,7 @@ const SEGMENTS = {
       "Set-ID",
       "Allergen-Typcode",
       "Allergen-Code/-Mnemonic/-Beschreibung",
-      "Reaktion Schweregrad",
+      "Reaktions-Schweregrad",
       "Allergie-Reaktionscode",
       "Identifikationsdatum",
     ]
@@ -865,13 +1077,13 @@ const SEGMENTS = {
       "Diagnosebezogene Gruppe",
       "DRG-Genehmigungsindikator",
       "DRG-Schweregrad",
-      "Diagnoseprioritätskode",
+      "Diagnosepriorität",
       "Diagnose-Arzt",
-      "Diagnose-ICD-Kode-Code",
+      "Diagnose-ICD-Kode",
       "Abrechnungsgruppierung",
       "DRG-Genehmigungsindikator-Datum/-uhrzeit",
       "Diagnose-Datum",
-      "DRG-Gruppe-Revisions-Datum",
+      "DRG-Gruppen-Revisions-Datum",
       "Diagnose-Priorität",
       "Treffsicherheit",
       "Beziehungs-Diagnose-Code",
@@ -885,7 +1097,7 @@ const SEGMENTS = {
       "Set-ID",
       "Prozedur-Kodierungsmethode",
       "Prozedurkode",
-      "Prozedurebeschreibung",
+      "Prozedurbeschreibung",
       "Datum/Uhrzeit der Prozedur",
       "Prozedur-Funktionaler-Typ",
       "Dauer der Prozedur",
@@ -896,7 +1108,7 @@ const SEGMENTS = {
       "Wert zum Prozedurcode",
       "Zugehöriger Wert",
       "Ärztlicher Prozedur-Code",
-      "Prozeduridenfikationsklasse",
+      "Prozeduridentifikationsklasse",
       "Prozedur-Modifikator",
       "Prozedur-DRG-Typ",
       "Gewebe-Typ-Code",
@@ -912,11 +1124,11 @@ const SEGMENTS = {
       "Occurrence-Nummer",
       "Platzierer-Gruppen-Nummer",
       "Termintyp",
-      "Terminreason",
-      "Appointmentdatum/-uhrzeit",
-      "Appointment-Dauer",
-      "Appointment-Dauer-Einheiten",
-      "Appointment-Kontrollcode",
+      "Termingrund",
+      "Termindatum/-uhrzeit",
+      "Termindauer",
+      "Termindauer-Einheiten",
+      "Termin-Kontrollcode",
       "Terminveranstaltungs-Status",
       "Terminpräferenz",
       "Terminpriorität",
@@ -951,38 +1163,63 @@ const SEGMENTS = {
       "Abfrage-Datum/Uhrzeit-Zeitraum-Filter",
     ]
   },
-  ZBE: {
-    name: "Custom Segment (Z-Segment)",
-    fields: []
-  },
 };
 
-// Component definitions for key fields
+// ─── Component Definitions ───────────────────────────────────────────────────
+// Reusable HL7 data type templates
+
+const HD  = ["Namespace-ID", "Universal-ID", "Universal-ID-Typ"];
+const CWE = ["Identifikator", "Text", "Codesystem", "Alternativer Identifikator", "Alternativer Text", "Alternatives Codesystem", "Codierungssystem-Version", "Alternatives Codierungssystem-Version", "Originaler Text"];
+const XPN = ["Nachname", "Vorname", "Zweiter Vorname", "Suffix", "Präfix", "Grad", "Namenstyp", "Namenspräsentation", "Namensreihenfolge", "Effektives Datum", "Ablaufdatum", "Professionelles Suffix"];
+const XAD = ["Straße", "Weitere Angaben", "Stadt", "Bundesland", "Postleitzahl", "Land", "Adresstyp", "Weitere Adressangabe", "Landkreis", "Zensuszone", "Adresspräzision"];
+const XTN = ["Telefonnummer", "Telekommunikations-Verwendungscode", "Telekommunikations-Gerätetyp", "E-Mail-Adresse", "Landesvorwahl", "Vorwahl", "Lokale Nummer", "Durchwahl"];
+const XCN = ["ID-Nummer", "Nachname", "Vorname", "Zweiter Vorname", "Suffix", "Präfix", "Grad", "Quellentabelle", "Zuweisende Behörde", "Namenstyp", "Bezeichnerprüfziffer", "Prüfziffer-Schema", "Bezeichner-Typencode", "Zuweisende Einrichtung"];
+const CX  = ["ID-Nummer", "Prüfziffer", "Prüfziffermethode", "Zuweisende Behörde", "ID-Typcode", "Zuweisende Einrichtung", "Effektives Datum", "Ablaufdatum"];
+const PL  = ["Punkt-Identifikator", "Raum", "Bett", "Einrichtung", "Standortstatus", "Patientenstandort-Typ", "Gebäude", "Etage", "Adresse"];
+
 const COMPONENTS = {
+  // MSH
+  "MSH.3": HD,  "MSH.4": HD,  "MSH.5": HD,  "MSH.6": HD,
   "MSH.9": ["Nachrichtencode", "Trigger-Ereignis", "Nachrichtenstruktur"],
-  "MSH.3": ["Namespace-ID", "Universal-ID", "Universal-ID-Typ"],
-  "MSH.4": ["Namespace-ID", "Universal-ID", "Universal-ID-Typ"],
-  "MSH.5": ["Namespace-ID", "Universal-ID", "Universal-ID-Typ"],
-  "MSH.6": ["Namespace-ID", "Universal-ID", "Universal-ID-Typ"],
-  "PID.3": ["ID-Nummer", "Prüfziffer", "Prüfziffermethode", "Zuweisende Behörde", "ID-Typcode", "Zuweisende Einrichtung", "Effektives Datum", "Ablaufdatum", "Zuweisungsgerichtsbarkeit", "Sicherheitsprüfungsdigit"],
-  "PID.5": ["Nachname", "Vorname", "Zweiter Vorname", "Suffix", "Präfix", "Grad", "Namenstyp", "Namenspräsentation", "Namensreihenfolge", "Effektives Datum", "Ablaufdatum", "Professionelles Suffix"],
-  "PID.11": ["Straße", "Andere Angaben", "Stadt", "Bundesland", "Postleitzahl", "Land", "Adresstyp", "Andere Angaben", "Landkreis", "Zensuszone", "Adresstyp"],
-  "PID.13": ["Telefonnummer", "Telekommunikations-Verwendungscode", "Telekommunikations-Gerätetyp", "E-Mail-Adresse", "Landesvorwahl", "Vorwahl", "Lokale Nummer", "Durchwahl"],
-  "PV1.3": ["Punkt-Identifikator", "Raum", "Bett", "Einrichtung", "Standortstatus", "Patientenstandort-Typ", "Gebäude", "Etage", "Adresse"],
-  "PV1.7": ["ID-Nummer", "Nachname", "Vorname", "Zweiter Vorname", "Suffix", "Präfix", "Grad", "Quellentabelle", "Zuweisende Behörde"],
-  "PV1.8": ["ID-Nummer", "Nachname", "Vorname", "Zweiter Vorname", "Suffix", "Präfix", "Grad", "Quellentabelle", "Zuweisende Behörde"],
-  "OBR.4": ["Identifikator", "Text", "Codesystem", "Alternativer Identifikator", "Alternativer Text", "Alternatives Codesystem"],
-  "OBX.3": ["Identifikator", "Text", "Codesystem", "Alternativer Identifikator", "Alternativer Text", "Alternatives Codesystem"],
-  "OBX.5": ["Identifikator", "Text", "Codesystem", "Alternativer Identifikator", "Alternativer Text", "Alternatives Codesystem"],
-  "OBX.6": ["Identifikator", "Text", "Codesystem"],
+  // PID
+  "PID.3":  CX,  "PID.5":  XPN, "PID.6":  XPN, "PID.9":  XPN,
+  "PID.11": XAD, "PID.13": XTN, "PID.14": XTN,
+  "PID.15": CWE, "PID.16": CWE, "PID.17": CWE, "PID.22": CWE, "PID.26": CWE,
+  // PV1
+  "PV1.3":  PL,
+  "PV1.7":  XCN, "PV1.8": XCN, "PV1.9": XCN, "PV1.17": XCN,
+  // PV2
+  "PV2.1":  PL,
+  // NK1
+  "NK1.2":  XPN, "NK1.3": CWE, "NK1.4": XAD, "NK1.5": XTN, "NK1.6": XTN,
+  "NK1.7":  CWE, "NK1.13": XPN,
+  // ROL
+  "ROL.3":  CWE, "ROL.4": XCN,
+  // GT1
+  "GT1.3":  XPN, "GT1.4": XPN, "GT1.5": XAD, "GT1.6": XTN, "GT1.7": XTN,
+  // OBR
+  "OBR.4":  CWE, "OBR.16": XCN, "OBR.17": XTN,
+  "OBR.32": XCN, "OBR.33": XCN, "OBR.34": XCN,
+  // OBX
+  "OBX.3":  CWE, "OBX.5": CWE, "OBX.6": CWE,
+  // ORC
+  "ORC.4":  CX,
+  "ORC.10": XCN, "ORC.11": XCN, "ORC.12": XCN,
+  // DG1
+  "DG1.3":  CWE, "DG1.12": XCN,
+  // PR1
+  "PR1.3":  CWE,
+  // AL1
+  "AL1.3":  CWE,
 };
 
-// ─── Sample Messages ────────────────────────────────────────────────────────
+// ─── Sample Messages ─────────────────────────────────────────────────────────
 
 const SAMPLES = {
   adt: `MSH|^~\\&|KIS|KRANKENHAUS|LAB|LABOR|20240315143022||ADT^A01^ADT_A01|MSG20240315001|P|2.5|||NE|AL|DE|8859/1
 EVN|A01|20240315143022|||SYSTEM
 PID|1||123456789^^^KIS^PI~987654321^^^GKV^SS||Mustermann^Max^Karl^Dr.||19800101|M|||Musterstraße 1^^München^^80331^DE^H||+49891234567^PRN^PH|||M|EV|ACC-2024-001|123456789
+NK1|1|Mustermann^Maria||Lindenweg 5^^München^^80333^DE|+4989555444^PRN^PH|||19551212|F
 PV1|1|I|KARDIOLOGIE^Zimmer-12^Bett-A^^^Hauptgebäude^2.OG||||||Meier^Hans^Dr.^^^Dr.med.||||||||GKV|BSP-2024-9876|||||||||||||||||||A|20240315143000
 AL1|1|DA|PENICILLIN^Penicillin^L|SV|Hautausschlag~Atemnot|20200101
 DG1|1|ICD10|I21.0^Akuter transmuraler Myokardinfarkt der Vorderwand^ICD-10-GM||20240315|A
@@ -1003,41 +1240,69 @@ MSA|AA|LAB20240315001|Nachricht erfolgreich verarbeitet
 ERR|||0^Message accepted^HL70357|I`
 };
 
-// ─── Parser ─────────────────────────────────────────────────────────────────
+// ─── HL7 Escape Decoding ─────────────────────────────────────────────────────
+
+function decodeHL7Escape(str, d) {
+  if (!str || !str.includes(d.escChar)) return str;
+  // Escape the escape character for use in RegExp
+  const e = d.escChar.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return str
+    .replace(new RegExp(`${e}F${e}`, 'g'), d.fieldSep)
+    .replace(new RegExp(`${e}S${e}`, 'g'), d.compSep)
+    .replace(new RegExp(`${e}R${e}`, 'g'), d.repSep)
+    .replace(new RegExp(`${e}T${e}`, 'g'), d.subSep)
+    .replace(new RegExp(`${e}E${e}`, 'g'), d.escChar)
+    .replace(new RegExp(`${e}X([0-9A-Fa-f]+)${e}`, 'g'), (_, hex) =>
+      String.fromCodePoint(parseInt(hex, 16)))
+    .replace(new RegExp(`${e}[HN]${e}`, 'g'), '');
+}
+
+// ─── Parser ──────────────────────────────────────────────────────────────────
 
 function parseHL7(raw) {
-  // Normalize line endings and segment separators
-  let text = raw.replace(/\r\n/g, '\r').replace(/\n/g, '\r').trim();
-  const segments = text.split('\r').filter(s => s.trim().length > 0);
+  // Strip MLLP framing: \x0B (VT, start block) and \x1C\r (FS+CR, end block)
+  let text = raw.replace(/^\x0B/, '').replace(/\x1C\r?$/, '');
+  // Normalize line endings to \r
+  text = text.replace(/\r\n/g, '\r').replace(/\n/g, '\r').trim();
 
+  const segments = text.split('\r').filter(s => s.trim().length > 0);
   if (segments.length === 0) throw new Error("Keine Segmente gefunden.");
 
   const firstSeg = segments[0];
-  if (!firstSeg.startsWith('MSH')) throw new Error("Erste Segment muss MSH sein.");
+  if (!firstSeg.startsWith('MSH')) throw new Error("Erstes Segment muss MSH sein.");
+  if (firstSeg.length < 8) throw new Error("MSH-Segment zu kurz – Kodierungszeichen fehlen.");
 
-  // Extract delimiters from MSH
-  const fieldSep = firstSeg[3] || '|';
-  const encodingChars = firstSeg[4] === fieldSep ? '' : firstSeg.substring(4, 8);
-  const compSep = encodingChars[0] || '^';
-  const repSep  = encodingChars[1] || '~';
-  const escChar = encodingChars[2] || '\\';
-  const subSep  = encodingChars[3] || '&';
+  // Delimiters from MSH
+  const fieldSep     = firstSeg[3] || '|';
+  const encodingChars = firstSeg.substring(4, 8);
+  const compSep  = encodingChars[0] || '^';
+  const repSep   = encodingChars[1] || '~';
+  const escChar  = encodingChars[2] || '\\';
+  const subSep   = encodingChars[3] || '&';
 
-  return segments.map(seg => parseSegment(seg, fieldSep, compSep, repSep, escChar, subSep));
+  _delimiters = { fieldSep, compSep, repSep, escChar, subSep };
+
+  return segments.map(seg =>
+    parseSegment(seg, fieldSep, compSep, repSep, escChar, subSep)
+  );
 }
 
 function parseSegment(seg, fieldSep, compSep, repSep, escChar, subSep) {
   const name = seg.substring(0, 3);
   const parts = seg.split(fieldSep);
-  const def = SEGMENTS[name] || (name.startsWith('Z') ? { name: `Z-Segment (${name})`, fields: [] } : { name: "Unbekanntes Segment", fields: [] });
+  const def = SEGMENTS[name]
+    || (name.startsWith('Z') ? { name: `Z-Segment (${name})`, fields: [] }
+                              : { name: "Unbekanntes Segment", fields: [] });
 
   let fields = [];
 
   if (name === 'MSH') {
-    // MSH field 1 = field separator itself
+    // MSH.1 = field separator character
     fields.push({ num: 1, name: def.fields[0] || "Feldtrennzeichen", value: [[{ val: fieldSep, label: null }]], raw: fieldSep });
-    fields.push({ num: 2, name: def.fields[1] || "Kodierungszeichen", value: [[{ val: parts[2] || '', label: null }]], raw: parts[2] || '' });
-    for (let i = 3; i < parts.length; i++) {
+    // MSH.2 = encoding characters — always parts[1]
+    fields.push({ num: 2, name: def.fields[1] || "Kodierungszeichen", value: [[{ val: parts[1] || '', label: null }]], raw: parts[1] || '' });
+    // MSH.3+ — parts[2] = MSH.3, parts[3] = MSH.4, …
+    for (let i = 2; i < parts.length; i++) {
       const raw = parts[i];
       const fieldNum = i + 1;
       fields.push({
@@ -1059,50 +1324,60 @@ function parseSegment(seg, fieldSep, compSep, repSep, escChar, subSep) {
     }
   }
 
-  return { name, def, fields };
+  return { name, def, fields, rawLine: seg };
 }
 
 function parseFieldValue(raw, compSep, repSep, subSep, fieldKey) {
   if (!raw) return null;
-  // Handle repetitions
   const reps = raw.split(repSep);
-  return reps.map(rep => parseComponents(rep, compSep, subSep, fieldKey));
+  return reps.map(rep => parseComponents(rep, compSep, fieldKey));
 }
 
-function parseComponents(rep, compSep, subSep, fieldKey) {
+function parseComponents(rep, compSep, fieldKey) {
   const comps = rep.split(compSep);
   const compDefs = COMPONENTS[fieldKey] || [];
   return comps.map((c, i) => ({
     val: c,
-    label: compDefs[i] || (comps.length > 1 ? `Komponente ${i + 1}` : null)
+    label: compDefs[i] || (comps.length > 1 ? `Komp. ${i + 1}` : null)
   }));
 }
 
 // ─── Renderer ────────────────────────────────────────────────────────────────
 
 function renderSegments(segments) {
-  const output = document.getElementById('output');
-  const index = document.getElementById('seg-index');
+  const output   = document.getElementById('output');
+  const index    = document.getElementById('seg-index');
   const statsBar = document.getElementById('stats-bar');
 
   output.innerHTML = '';
-  index.innerHTML = '';
+  index.innerHTML  = '';
   index.style.display = 'flex';
 
-  // Stats
   const totalFields = segments.reduce((a, s) => a + s.fields.filter(f => f.raw).length, 0);
   statsBar.innerHTML = `
     <div class="stat-item"><div class="stat-dot"></div>${segments.length} Segmente</div>
     <div class="stat-item"><div class="stat-dot" style="background:var(--green)"></div>${totalFields} Felder</div>
   `;
 
+  // Count occurrences per segment type for numbered pills
+  const typeCounts = {};
+  const typeOccurrence = {};
+  segments.forEach(s => { typeCounts[s.name] = (typeCounts[s.name] || 0) + 1; });
+
   segments.forEach((seg, idx) => {
+    typeOccurrence[seg.name] = (typeOccurrence[seg.name] || 0);
+    const occurrence = typeOccurrence[seg.name]++;
+    const count = typeCounts[seg.name];
+
     // Index pill
     const pill = document.createElement('span');
     pill.className = `seg-pill seg-${seg.name}`;
-    pill.textContent = seg.name;
     pill.style.cssText = getSegStyle(seg.name);
-    pill.onclick = () => document.getElementById(`seg-${idx}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    pill.title = seg.def.name + (count > 1 ? ` (${occurrence + 1}/${count})` : '');
+    pill.innerHTML = escHtml(seg.name)
+      + (count > 1 ? `<span class="pill-count">${occurrence + 1}</span>` : '');
+    pill.onclick = () =>
+      document.getElementById(`seg-${idx}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
     index.appendChild(pill);
 
     // Segment card
@@ -1112,30 +1387,41 @@ function renderSegments(segments) {
 
     const nonEmpty = seg.fields.filter(f => f.raw).length;
 
-    card.innerHTML = `
-      <div class="segment-header" onclick="toggleCard(this)">
-        <span class="seg-tag seg-${seg.name}">${seg.name}</span>
-        <span class="seg-name">${seg.def.name}</span>
-        <span class="seg-count">${nonEmpty} Felder</span>
-        <span class="chevron">▾</span>
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'segment-header';
+    headerDiv.innerHTML = `
+      <span class="seg-tag seg-${escHtml(seg.name)}">${escHtml(seg.name)}</span>
+      <span class="seg-name">${escHtml(seg.def.name)}</span>
+      <span class="seg-count">${nonEmpty} Felder</span>
+      <div class="seg-header-actions">
+        <button class="btn-icon" title="Rohzeile anzeigen/verbergen" onclick="event.stopPropagation();toggleRaw(this)">&#123;&#183;&#125;</button>
       </div>
-      <div class="segment-body">
-        ${seg.fields.map(f => renderField(f, seg.name)).join('')}
-      </div>
+      <span class="chevron">▾</span>
     `;
+    headerDiv.addEventListener('click', () => card.classList.toggle('collapsed'));
 
+    const bodyDiv = document.createElement('div');
+    bodyDiv.className = 'segment-body';
+    bodyDiv.innerHTML = seg.fields.map(f => renderField(f)).join('');
+
+    const rawDiv = document.createElement('div');
+    rawDiv.className = 'raw-line';
+    rawDiv.textContent = seg.rawLine;
+    bodyDiv.appendChild(rawDiv);
+
+    card.appendChild(headerDiv);
+    card.appendChild(bodyDiv);
     output.appendChild(card);
   });
 }
 
 function getSegStyle(name) {
-  const knownSegs = Object.keys(SEGMENTS);
-  if (knownSegs.includes(name)) return '';
+  if (SEGMENTS[name]) return '';
   if (name.startsWith('Z')) return 'background:#2a1e3f;color:#c4b5fd;';
   return 'background:#252525;color:#888;';
 }
 
-function renderField(field, segName) {
+function renderField(field) {
   const hasValue = field.raw && field.raw.length > 0;
   const cls = hasValue ? 'field-row has-value' : 'field-row';
 
@@ -1144,8 +1430,10 @@ function renderField(field, segName) {
     valueHtml = '<span class="field-value empty">—</span>';
   } else {
     const reps = field.value;
+    const rawEscaped = escHtml(field.raw);
+    const copyBtn = `<button class="copy-btn" onclick="copyValue(this,${JSON.stringify(field.raw)})" title="In Zwischenablage kopieren">⎘</button>`;
     if (reps.length === 1) {
-      valueHtml = `<div class="field-value">${renderComponents(reps[0])}</div>`;
+      valueHtml = `<div class="field-value">${renderComponents(reps[0])}${copyBtn}</div>`;
     } else {
       const repsHtml = reps.map((rep, i) =>
         `<div class="repeat-item">
@@ -1153,12 +1441,14 @@ function renderField(field, segName) {
           ${renderComponents(rep)}
         </div>`
       ).join('');
-      valueHtml = `<div class="field-value"><div class="repeat-group">${repsHtml}</div></div>`;
+      valueHtml = `<div class="field-value"><div class="repeat-group">${repsHtml}</div>${copyBtn}</div>`;
     }
   }
 
+  const searchKey = (field.name + ' ' + (field.raw || '')).toLowerCase();
+
   return `
-    <div class="${cls}">
+    <div class="${cls}" data-search="${escHtml(searchKey)}">
       <div class="field-num">${field.num}</div>
       <div class="field-name">${escHtml(field.name)}</div>
       ${valueHtml}
@@ -1167,13 +1457,14 @@ function renderField(field, segName) {
 }
 
 function renderComponents(comps) {
+  const cs = _delimiters.compSep;
   if (comps.length === 1 && !comps[0].label) {
-    return `<span class="component-val">${escHtml(comps[0].val)}</span>`;
+    return `<span class="component-val">${escHtml(decodeHL7Escape(comps[0].val, _delimiters))}</span>`;
   }
   return comps.filter(c => c.val || c.label).map((c, i) => `
     <span class="component">
-      ${i > 0 && comps[i - 1].val ? '<span class="component-sep">^</span>' : ''}
-      ${c.val ? `<span class="component-val">${escHtml(c.val)}</span>` : ''}
+      ${i > 0 ? `<span class="component-sep">${escHtml(cs)}</span>` : ''}
+      ${c.val ? `<span class="component-val">${escHtml(decodeHL7Escape(c.val, _delimiters))}</span>` : ''}
       ${c.label && c.val ? `<span class="component-label">${escHtml(c.label)}</span>` : ''}
     </span>
   `).join('');
@@ -1187,17 +1478,15 @@ function escHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-function toggleCard(header) {
-  header.closest('.segment-card').classList.toggle('collapsed');
-}
-
 // ─── Actions ─────────────────────────────────────────────────────────────────
 
 function parse() {
-  const raw = document.getElementById('input').value.trim();
-  const output = document.getElementById('output');
-  const index = document.getElementById('seg-index');
+  const raw      = document.getElementById('input').value.trim();
+  const output   = document.getElementById('output');
+  const index    = document.getElementById('seg-index');
   const statsBar = document.getElementById('stats-bar');
+  const search   = document.getElementById('search');
+  if (search) search.value = '';
 
   if (!raw) {
     output.innerHTML = '<div class="error-box">⚠ Bitte eine HL7 Nachricht eingeben.</div>';
@@ -1222,10 +1511,11 @@ function clearInput() {
     <div class="empty-state">
       <div class="icon">⚕</div>
       <p>HL7 Nachricht eingeben und auf <strong>Parsen</strong> klicken, um die Segmente zu analysieren.</p>
-    </div>
-  `;
+    </div>`;
   document.getElementById('seg-index').style.display = 'none';
   document.getElementById('stats-bar').innerHTML = '';
+  const search = document.getElementById('search');
+  if (search) search.value = '';
 }
 
 function loadSample(type) {
@@ -1233,7 +1523,52 @@ function loadSample(type) {
   parse();
 }
 
-// Auto-parse on Ctrl+Enter
+function collapseAll() {
+  document.querySelectorAll('.segment-card').forEach(c => c.classList.add('collapsed'));
+}
+
+function expandAll() {
+  document.querySelectorAll('.segment-card').forEach(c => c.classList.remove('collapsed'));
+}
+
+function toggleRaw(btn) {
+  const rawLine = btn.closest('.segment-card').querySelector('.raw-line');
+  if (rawLine) rawLine.classList.toggle('visible');
+}
+
+function filterFields(query) {
+  const q = query.trim().toLowerCase();
+  document.querySelectorAll('.segment-card').forEach(card => {
+    let cardVisible = false;
+    card.querySelectorAll('.field-row').forEach(row => {
+      if (!q) {
+        row.classList.remove('hidden');
+        cardVisible = true;
+      } else {
+        const match = (row.dataset.search || '').includes(q);
+        row.classList.toggle('hidden', !match);
+        if (match) cardVisible = true;
+      }
+    });
+    card.style.display = (!q || cardVisible) ? '' : 'none';
+    if (q && cardVisible) card.classList.remove('collapsed');
+  });
+}
+
+let _toastTimer = null;
+function copyValue(btn, raw) {
+  navigator.clipboard.writeText(raw).then(() => {
+    btn.classList.add('copied');
+    setTimeout(() => btn.classList.remove('copied'), 1200);
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+  });
+}
+
+// ─── Keyboard Shortcut ───────────────────────────────────────────────────────
+
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') parse();
 });
