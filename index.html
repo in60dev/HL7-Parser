@@ -1252,8 +1252,10 @@ function decodeHL7Escape(str, d) {
     .replace(new RegExp(`${e}R${e}`, 'g'), d.repSep)
     .replace(new RegExp(`${e}T${e}`, 'g'), d.subSep)
     .replace(new RegExp(`${e}E${e}`, 'g'), d.escChar)
-    .replace(new RegExp(`${e}X([0-9A-Fa-f]+)${e}`, 'g'), (_, hex) =>
-      String.fromCodePoint(parseInt(hex, 16)))
+    .replace(new RegExp(`${e}X([0-9A-Fa-f]+)${e}`, 'g'), (_, hex) => {
+      const cp = parseInt(hex, 16);
+      return cp <= 0x10FFFF ? String.fromCodePoint(cp) : '';
+    })
     .replace(new RegExp(`${e}[HN]${e}`, 'g'), '');
 }
 
@@ -1267,6 +1269,7 @@ function parseHL7(raw) {
 
   const segments = text.split('\r').filter(s => s.trim().length > 0);
   if (segments.length === 0) throw new Error("Keine Segmente gefunden.");
+  if (segments.length > 10000) throw new Error("Nachricht zu groß – mehr als 10.000 Segmente.");
 
   const firstSeg = segments[0];
   if (!firstSeg.startsWith('MSH')) throw new Error("Erstes Segment muss MSH sein.");
@@ -1564,6 +1567,8 @@ function copyValue(btn, raw) {
     toast.classList.add('show');
     clearTimeout(_toastTimer);
     _toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+  }).catch(() => {
+    btn.title = 'Kopieren fehlgeschlagen';
   });
 }
 
